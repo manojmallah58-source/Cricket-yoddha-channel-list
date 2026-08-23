@@ -103,20 +103,6 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 video.mode-fill{object-fit:fill}
 video.mode-cover{object-fit:cover}
 
-/* ================= WATERMARK ================= */
-#cc-watermark{position:fixed;z-index:9996;
-top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));
-display:flex;align-items:center;gap:8px;
-padding:6px 13px 6px 8px;border-radius:999px;
-background:rgba(9,14,11,.8);border:1px solid rgba(52,211,153,.28);
-pointer-events:none;user-select:none}
-#cc-watermark span{color:#fff;font-family:'Archivo';font-size:12px;font-weight:900;letter-spacing:1.6px}
-#cc-watermark .accent{color:var(--cc-accent-2)}
-#cc-watermark .wm-live{display:inline-flex;align-items:center;gap:4px;margin-left:2px;
-padding-left:9px;border-left:1px solid rgba(255,255,255,.14)}
-#cc-watermark .wm-live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--cc-live)}
-#cc-watermark .wm-live b{font-family:'Archivo';font-size:9px;font-weight:800;color:#ff8a8a}
-
 /* ================= STATUS TOAST ================= */
 #status{position:fixed;top:max(12px,env(safe-area-inset-top));
 right:max(12px,env(safe-area-inset-right));z-index:9997;
@@ -201,10 +187,6 @@ color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
 </div>
 <div id="status"></div>
 <div id="cc-copied"></div>
-<div id="cc-watermark">
-<span>STREAM<span class="accent">PLAYER</span></span>
-<span class="wm-live"><b>LIVE</b></span>
-</div>
 <div id="channel-list">
 <div class="list-header">
 <div class="brand">
