@@ -36,13 +36,11 @@ font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helveti
 --logo:none;
 }
 
-/* ================= LOADING OVERLAY ================= */
 #overlay{position:fixed;inset:0;z-index:9999;
 display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
 background:#000}
 #overlay #loadMsg{color:#aaa;font-size:13px;font-weight:600;letter-spacing:.5px;text-align:center}
 
-/* ================= CHANNEL LIST / HOMEPAGE ================= */
 #channel-list{position:fixed;inset:0;z-index:9998;display:none;flex-direction:column;
 overflow-y:auto;-webkit-overflow-scrolling:touch;
 padding:0 0 max(40px,env(safe-area-inset-bottom));
@@ -59,8 +57,6 @@ color:#fff;line-height:.95}
 .brand-name span{color:var(--cc-accent-2)}
 .brand-tag{font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
 color:var(--cc-muted)}
-
-.cc-marquee{display:none}
 
 .grid-head{position:relative;z-index:2;display:flex;align-items:center;gap:12px;
 padding:0 clamp(16px,4vw,44px) 16px}
@@ -96,14 +92,12 @@ background:rgba(7,11,9,.85);border:1px solid rgba(255,82,82,.35);
 font-size:10px;font-weight:800;letter-spacing:1.2px;color:#ff8080}
 .ch-live-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--cc-live)}
 
-/* ================= PLAYER CONTAINER ================= */
 #pc{position:fixed;inset:0;background:#000;display:none;
 align-items:center;justify-content:center;touch-action:manipulation}
 video{width:100%;height:100%;object-fit:contain;background:#000}
 video.mode-fill{object-fit:fill}
 video.mode-cover{object-fit:cover}
 
-/* ================= STATUS TOAST ================= */
 #status{position:fixed;top:max(12px,env(safe-area-inset-top));
 right:max(12px,env(safe-area-inset-right));z-index:9997;
 padding:7px 14px;border-radius:99px;
@@ -115,7 +109,6 @@ transition:opacity .2s;max-width:270px;text-align:right}
 #status.warn{color:#fbbf24}
 #status.err{color:#f87171}
 
-/* ================= CUSTOM SHAKA BUTTONS ================= */
 .sp-btn{background:transparent!important;border:none!important;
 cursor:pointer!important;padding:0 8px!important;
 opacity:.85;display:flex;align-items:center;justify-content:center;gap:5px;
@@ -127,7 +120,6 @@ height:100%;min-width:36px;color:#fff!important}
 .shaka-controls-container button{color:#fff!important}
 .shaka-video-container{background-color:#000!important}
 
-/* ================= TOOLBAR ================= */
 .cc-toolbar{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:12px;align-items:center;
 padding:0 clamp(16px,4vw,44px) 20px}
 .cc-search{position:relative;display:flex;align-items:center;flex:1 1 240px;min-width:200px;max-width:440px}
@@ -174,7 +166,6 @@ font-size:10px;font-weight:800;color:var(--cc-accent-2)}
 .recent-clear{padding:6px 14px;border-radius:99px;cursor:pointer;
 border:1px solid var(--cc-border2);background:rgba(9,14,11,.5);color:var(--cc-muted);font-size:11px;font-weight:800}
 
-#cc-hero{display:none}
 #cc-copied{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:10001;
 padding:10px 20px;border-radius:99px;pointer-events:none;background:var(--cc-accent-3);
 color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
@@ -205,9 +196,9 @@ color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
 <div class="cc-chips" id="cc-chips">
 <button class="cc-chip active" type="button" data-cat="All">All</button>
 <button class="cc-chip" type="button" data-cat="Sports">Sports</button>
-<button class="cc-chip" type="button" data-cat="HD">HD</button>
-<button class="cc-chip" type="button" data-cat="Kids">Kids</button>
 <button class="cc-chip" type="button" data-cat="Entertainment">Entertainment</button>
+<button class="cc-chip" type="button" data-cat="Infotainment">Infotainment</button>
+<button class="cc-chip" type="button" data-cat="Movies">Movies</button>
 </div>
 <div class="cc-sort">
 <label for="cc-sort">Sort</label>
@@ -251,7 +242,7 @@ color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
 <script>
 (function(){
 "use strict";
-var API = "https://sayan-sportlink-sonynetwork.pages.dev/sonyliv.json";
+var API = "https://yashuu1.streamxlive.workers.dev/"; /* Yahan apna naya API/JSON link daalein */
 var $overlay = document.getElementById("overlay");
 var $loadMsg = document.getElementById("loadMsg");
 var $status = document.getElementById("status");
@@ -311,15 +302,16 @@ _stTmr=null;
 function setMsg(m){ if($loadMsg) $loadMsg.textContent=m; }
 function hideOverlay(){ if($overlay) $overlay.style.display="none"; }
 function getChId(){ return new URLSearchParams(location.search).get("id")||""; }
-function rawCookie(c){ return c&&c.indexOf("__hdnea__=")==0?c.slice(10):(c||""); }
 
 async function loadData(){
 var bustedUrl = API + (API.indexOf("?")!==-1?"&":"?") + "_t=" + Date.now();
 var r=await fetch(bustedUrl,{cache:"no-store",headers:{Accept:"application/json"}});
 if(!r.ok) throw new Error("HTTP "+r.status);
 var d=await r.json();
-if(!d||!Array.isArray(d.channels)||!d.channels.length) throw new Error("empty");
-return d;
+// Agar data direct array hai ya object ke andar array hai us hisaab se handle karenge
+var channels = Array.isArray(d) ? d : (d.channels || []);
+if(!channels.length) throw new Error("empty");
+return channels;
 }
 
 var ALL=[], state={cat:"All",q:"",sort:"default"}, wired=false;
@@ -351,19 +343,15 @@ var w=(name||"").trim().split(/\s+/)[0];
 return w? (w.charAt(0).toUpperCase()+w.slice(1)) : "Other";
 }
 
-function matchCat(name,cat){
+function matchCat(chCat,cat){
 if(cat==="All") return true;
-var n=(name||"").toLowerCase();
-if(cat==="Sports") return /sport|cricket|willow|\bten\b|ptv/.test(n);
-if(cat==="HD") return /\bhd\b/.test(n);
-if(cat==="Kids") return /kids|pogo|nick|cartoon|disney|chutti|hungama|baby/.test(n);
-if(cat==="Entertainment") return !/sport|cricket|willow|kids|pogo|nick|cartoon|disney|chutti|hungama|baby|news/.test(n);
-return true;
+if(!chCat) return false;
+return chCat.toLowerCase() === cat.toLowerCase();
 }
 
 function passes(ch){
 var okQ=!state.q || (ch.name||"").toLowerCase().indexOf(state.q)!==-1;
-return okQ && matchCat(ch.name,state.cat);
+return okQ && matchCat(ch.category,state.cat);
 }
 
 function makeCard(ch){
@@ -373,9 +361,9 @@ a.href="?id="+encodeURIComponent(ch.id);
 a.addEventListener("click",function(){ recordRecent(ch.id); });
 var poster=document.createElement("div");
 poster.className="ch-poster";
-if(ch.poster){
+if(ch.logo){
 var img=document.createElement("img");
-img.src=ch.poster; img.loading="lazy"; img.alt="";
+img.src=ch.logo; img.loading="lazy"; img.alt="";
 poster.appendChild(img);
 } else {
 var fb=document.createElement("div");
@@ -547,14 +535,6 @@ else await vid.requestPictureInPicture();
 }
 }
 
-function detectManifestType(ch){
-if(ch.type==="dash") return "application/dash+xml";
-if(ch.type==="hls") return "application/x-mpegurl";
-var u=(ch.stream_url||"").toLowerCase();
-if(u.indexOf(".mpd")!==-1) return "application/dash+xml";
-return "application/x-mpegurl";
-}
-
 async function startPlayer(ch){
 $pc.style.display="flex";
 hideOverlay();
@@ -568,20 +548,13 @@ seekBarColors:{base:"#3a4a42",buffered:"#059669",played:"#34d399"}
 });
 setTimeout(function(){ injectControls($pc,$vid); },100);
 
-var url=ch.stream_url;
-var cookie=ch.cookie||"", rawToken=rawCookie(cookie);
-function withToken(uri){
-if(!rawToken) return uri;
-if(uri.indexOf("__hdnea__")!==-1) return uri;
-var sep=uri.indexOf("?")!==-1?"&":"?";
-return uri+sep+"__hdnea__="+rawToken;
-}
+var url=ch.url;
+var cookie=ch.cookie||"";
 var T=shaka.net.NetworkingEngine.RequestType;
 player.getNetworkingEngine().registerRequestFilter(function(type,request){
 request.headers["Referer"]="https://www.jiotv.com/";
 request.headers["User-Agent"]="Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
 if(cookie) request.headers["Cookie"]=cookie;
-if(type===T.MANIFEST||type===T.SEGMENT) request.uris=request.uris.map(withToken);
 });
 
 var cfg={
@@ -595,17 +568,17 @@ stallEnabled:true
 },
 abr:{enabled:true, defaultBandwidthEstimate:PROF.bwEst}
 };
-if(ch.key_id && ch.key){
+if(ch.keyId && ch.key){
 cfg.drm={ clearKeys:{} };
-cfg.drm.clearKeys[ch.key_id]=ch.key;
+cfg.drm.clearKeys[ch.keyId]=ch.key;
 }
 player.configure(cfg);
 
 try{
-await player.load(url, undefined, detectManifestType(ch));
+await player.load(url, undefined, "application/dash+xml");
 $vid.play().catch(function(){});
 } catch(_){
-setTimeout(function(){ player.load(url, undefined, detectManifestType(ch)).then(function(){ $vid.play().catch(function(){}); }); }, 1500);
+setTimeout(function(){ player.load(url, undefined, "application/dash+xml").then(function(){ $vid.play().catch(function(){}); }); }, 1500);
 }
 }
 
@@ -613,8 +586,8 @@ async function main(){
 var id=getChId(), data;
 try{ data=await loadData(); }
 catch(_){ errMsg("Connection error."); return; }
-if(!id){ renderList(data.channels); return; }
-var ch=data.channels.find(function(c){ return c.id===id; });
+if(!id){ renderList(data); return; }
+var ch=data.find(function(c){ return c.id===id; });
 if(!ch){ errMsg("Channel not found."); return; }
 document.title=ch.name;
 await startPlayer(ch);
