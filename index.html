@@ -112,7 +112,6 @@ setTimeout(function(){ $status.className=""; },3000);
 function setMsg(m){ $loadMsg && ($loadMsg.textContent=m); }
 function hideOverlay(){ $overlay && ($overlay.style.display="none"); }
 function getChId(){ return new URLSearchParams(location.search).get("id")||""; }
-function rawCookie(c){ return c&&c.indexOf("__hdnea__")==0?c.slice(10):(c||""); }
 
 async function loadData(){
 var r=await fetch(API+"?_t="+Date.now(),{cache:"no-store"});
@@ -181,13 +180,23 @@ controlPanelElements:["play_pause","mute","volume","time_and_duration","spacer",
 });
 
 var url=ch.stream_url;
-var cookie=ch.cookie||"", rawToken=rawCookie(cookie);
+var cookieStr = ch.cookie || "";
+// Extract raw token if cookie string starts with __hdnea__=
+var rawToken = "";
+if(cookieStr.indexOf("__hdnea__=") === 0){
+  rawToken = cookieStr.slice(10);
+} else {
+  rawToken = cookieStr;
+}
+
 player.getNetworkingEngine().registerRequestFilter(function(type,req){
 req.headers["Referer"]="https://www.jiotv.com/";
 req.headers["User-Agent"]="Mozilla/5.0 (Linux; Android 11)";
-if(cookie) req.headers["Cookie"]=cookie;
+if(cookieStr) req.headers["Cookie"]=cookieStr;
 if(rawToken && (type===1||type===2)){
-if(req.uris[0].indexOf("__hdnea__")===-1) req.uris[0]+=(req.uris[0].indexOf("?")===-1?"?":"&")+"__hdnea__="+rawToken;
+  if(req.uris[0].indexOf("__hdnea__")===-1){
+    req.uris[0] += (req.uris[0].indexOf("?")===-1 ? "?" : "&") + "__hdnea__=" + rawToken;
+  }
 }
 });
 
