@@ -115,6 +115,7 @@ opacity:.85;display:flex;align-items:center;justify-content:center;gap:5px;
 height:100%;min-width:36px;color:#fff!important}
 .sp-btn:hover{opacity:1}
 .sp-btn svg{width:18px;height:18px;display:block;pointer-events:none;flex-shrink:0}
+.sp-btn.active{opacity:1;color:var(--cc-accent-2)!important}
 .fit-ratio{font-size:11px;font-weight:700;white-space:nowrap;pointer-events:none}
 .shaka-controls-container button{color:#fff!important}
 .shaka-video-container{background-color:#000!important}
@@ -196,6 +197,8 @@ color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
 <button class="cc-chip active" type="button" data-cat="All">All</button>
 <button class="cc-chip" type="button" data-cat="Sports">Sports</button>
 <button class="cc-chip" type="button" data-cat="HD">HD</button>
+<button class="cc-chip" type="button" data-cat="Kids">Kids</button>
+<button class="cc-chip" type="button" data-cat="Entertainment">Entertainment</button>
 </div>
 <div class="cc-sort">
 <label for="cc-sort">Sort</label>
@@ -343,8 +346,10 @@ return w? (w.charAt(0).toUpperCase()+w.slice(1)) : "Other";
 function matchCat(name,cat){
 if(cat==="All") return true;
 var n=(name||"").toLowerCase();
-if(cat==="Sports") return /sport|cricket|willow|\bten\b|ptv|sony|star/.test(n);
+if(cat==="Sports") return /sport|cricket|willow|\bten\b|ptv/.test(n);
 if(cat==="HD") return /\bhd\b/.test(n);
+if(cat==="Kids") return /kids|pogo|nick|cartoon|disney|chutti|hungama|baby/.test(n);
+if(cat==="Entertainment") return !/sport|cricket|willow|kids|pogo|nick|cartoon|disney|chutti|hungama|baby|news/.test(n);
 return true;
 }
 
@@ -535,6 +540,8 @@ else await vid.requestPictureInPicture();
 }
 
 function detectManifestType(ch){
+if(ch.type==="dash") return "application/dash+xml";
+if(ch.type==="hls") return "application/x-mpegurl";
 var u=(ch.stream_url||"").toLowerCase();
 if(u.indexOf(".mpd")!==-1) return "application/dash+xml";
 return "application/x-mpegurl";
