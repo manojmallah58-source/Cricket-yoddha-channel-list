@@ -360,10 +360,10 @@
 <!-- Channel list -->
 <div id="channel-list">
   <div class="header">
-    <div class="logo-mark">⚡</div>
+    <div class="logo-mark">🏏</div>
     <div class="header-text">
-      <h1>SPORTLINK</h1>
-      <div class="sub">Star · Live Streams</div>
+      <h1>Cricket Yoddha</h1>
+      <div class="sub">Live Match Streams</div>
     </div>
     <span id="channelCount">0 channels</span>
   </div>
@@ -977,7 +977,7 @@ async function main(){
   var chs=data.channels||data;
   var ch=chs.find(function(c){return c.id===id;});
   if(!ch){ errMsg("Channel not found."); return; }
-  document.title="SPORTLINK · "+ch.name;
+  document.title="Cricket Yoddha · "+ch.name;
   await startPlayer(ch);
 }
 document.addEventListener("DOMContentLoaded",main);
