@@ -426,7 +426,7 @@
 /* ════════════════════════════════════════════
    CONFIG / REFS
 ════════════════════════════════════════════ */
-var API="https://premiumplugx.top/jiostb/mjelo.php?view=raw";
+var API="https://sonujson-v5.pages.dev/Data/sports.json";
 
 var $overlay   =document.getElementById("overlay");
 var $loadMsg   =document.getElementById("loadMsg");
@@ -580,7 +580,7 @@ async function loadData(){
       key_id:ch.key_id||ch.keyId||'',
       key:ch.key||'',
       logo:ch.logo||'',
-      group:ch.group||ch.category||'General'
+      group:ch.group||ch.category||'Sports'
     };
     var parsed=parseStreamUrl(n.stream_url);
     n.stream_url=parsed.url;
