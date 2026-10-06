@@ -577,8 +577,8 @@ async function loadData(){
       stream_url:ch.stream_url||ch.mpd_url||'',
       cookie:ch.cookie||'',
       cookie_expires:ch.cookie_expires||'',
-      key_id:ch.key_id||ch.keyId||'',
-      key:ch.key||'',
+      key_id:(ch.key_id||ch.keyId||'').trim(),
+      key:(ch.key||'').trim(),
       logo:ch.logo||'',
       group:ch.group||ch.category||'Sports'
     };
@@ -854,7 +854,9 @@ async function startPlayer(ch){
         retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000}},
       abr:{enabled:true,defaultBandwidthEstimate:PROF.bwEst,switchInterval:4,restrictions:restr}
     };
-    if(keyId&&key) cfg.drm={clearKeys:{[keyId]:key}};
+    if(keyId && key){
+      cfg.drm={clearKeys:{[keyId]:key}};
+    }
     return cfg;
   }
   player.configure(buildCfg());
