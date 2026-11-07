@@ -1,234 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#000000">
-<title>Live Player</title>
-
-<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
-
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  width: 100%;
-  height: 100%;
-  height: 100dvh;
-  overflow: hidden;
-  background: #000;
-}
-
-.player-container {
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  position: fixed;
-  inset: 0;
-  background: #000;
-}
-
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #000;
-}
-
-.plyr {
-  width: 100%;
-  height: 100%;
-  --plyr-color-main: #e50914;
-  --plyr-video-background: #000;
-  --plyr-menu-background: #151515;
-  --plyr-menu-color: #fff;
-  --plyr-control-radius: 5px;
-}
-
-.plyr--video .plyr__controls {
-  padding: 15px 12px;
-  background: linear-gradient(transparent, rgba(0,0,0,.9));
-}
-
-.plyr__video-wrapper {
-  height: 100%;
-  background: #000;
-}
-
-.plyr__video-wrapper video {
-  object-fit: contain;
-}
-
-.status {
-  position: absolute;
-  z-index: 5;
-  top: 15px;
-  left: 15px;
-  color: #fff;
-  background: rgba(20,20,20,.8);
-  border: 1px solid #333;
-  padding: 7px 11px;
-  border-radius: 5px;
-  font: 12px Arial, sans-serif;
-  pointer-events: none;
-}
-
-.status::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  background: #e50914;
-  border-radius: 50%;
-  margin-right: 7px;
-}
-
-@media (orientation: portrait) {
-  .plyr__video-wrapper video {
-    object-fit: contain;
-  }
-}
-</style>
-</head>
-
-<body>
-<div class="player-container">
-  <div class="status" id="status">Connecting</div>
-  <video id="video" controls playsinline crossorigin="anonymous"
-         preload="auto"></video>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
-<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-
-<script>
-const STREAM =
-  "https://stream-through-spark.lovable.app/api/proxy?u=https://dishmt.slivcdn.com/hls/live/2020591/TEN3HD/master.m3u8?hdnea=exp=1794054398~acl=/*~id=35083061525596278690298080425087~hmac=1ddff2b1e82c3da0240a8170a1b6bc9e61226ac5466a9881835ff71e7c52dfb1";
-
-const video = document.getElementById("video");
-const status = document.getElementById("status");
-
-let hls = null;
-let player = null;
-
-function setStatus(message) {
-  status.textContent = message;
-}
-
-function initializePlayer(qualityOptions = [0]) {
-  if (player) player.destroy();
-
-  player = new Plyr(video, {
-    autoplay: false,
-    muted: false,
-    clickToPlay: true,
-    hideControls: true,
-    resetOnEnd: false,
-    keyboard: { focused: true, global: true },
-    tooltips: { controls: true, seek: true },
-    settings: ["quality", "speed"],
-    speed: {
-      selected: 1,
-      options: [0.5, 0.75, 1, 1.25, 1.5, 2]
-    },
-    quality: {
-      default: 0,
-      options: qualityOptions,
-      forced: true,
-      onChange: changeQuality
-    },
-    i18n: {
-      qualityLabel: { 0: "Auto" }
-    }
-  });
-
-  player.on("playing", () => setStatus("Playing"));
-  player.on("waiting", () => setStatus("Buffering"));
-  player.on("error", () => setStatus("Playback error"));
-  player.on("canplay", () => setStatus("Ready"));
-}
-
-function changeQuality(height) {
-  if (!hls) return;
-
-  if (height === 0) {
-    hls.currentLevel = -1;
-    return;
-  }
-
-    const index = hls.levels.findIndex(
-    level => level.height === height
-  );
-
-  if (index !== -1) {
-    hls.currentLevel = index;
-  }
-}
-
-function startPlayer() {
-  if (Hls.isSupported()) {
-    hls = new Hls({
-      enableWorker: true,
-      capLevelToPlayerSize: false,
-      startLevel: -1,
-      maxBufferLength: 30
-    });
-
-    hls.loadSource(STREAM);
-    hls.attachMedia(video);
-
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      const heights = [
-        ...new Set(
-          hls.levels
-            .map(level => level.height)
-            .filter(height => height > 0)
-        )
-      ].sort((a, b) => a - b);
-
-      initializePlayer([0, ...heights]);
-      setStatus("Ready");
-    });
-
-    hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
-      if (hls.autoLevelEnabled && hls.levels[data.level]) {
-        setStatus("Auto · " + hls.levels[data.level].height + "p");
-      }
-    });
-
-    hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data.fatal) {
-        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-          setStatus("Network error");
-          hls.startLoad();
-        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-          setStatus("Recovering playback");
-          hls.recoverMediaError();
-        } else {
-          setStatus("Stream unavailable");
-          hls.destroy();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad-Free Stream Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-    });
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+        }
+        .player-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
 
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = STREAM;
-    initializePlayer([0]);
-    setStatus("Ready");
-  } else {
-    setStatus("HLS not supported");
-  }
-}
+    <div class="player-container">
+        <!-- Aapka link yahan iframe ke andar load hoga -->
+        <iframe 
+            id="streamFrame"
+            src="https://allrounder-live12.pages.dev/hotstar" 
+            allowfullscreen="true" 
+            allow="encrypted-media; autoplay; picture-in-picture">
+        </iframe>
+    </div>
 
-startPlayer();
+    <script>
+        // 1. Naye tabs ya popups khulne se rokne ke liye window.open ko override karna
+        window.open = function() {
+            console.warn("Popup/Redirect blocked!");
+            return null;
+        };
 
-window.addEventListener("beforeunload", () => {
-  if (hls) hls.destroy();
-});
-</script>
+        // 2. Click-jacking aur unwanted redirects ko rokne ke liye safety check
+        document.addEventListener('click', function(event) {
+            // Agar koi external link ya redirect trigger hota hai toh use rok sakte hain
+            const target = event.target.closest('a');
+            if (target && target.getAttribute('target') === '_blank') {
+                event.preventDefault();
+            }
+        }, true);
+
+        // 3. Agar iframe ke andar koi dynamic ad overlay ya banner inject hota hai
+        setInterval(() => {
+            try {
+                const iframe = document.getElementById('streamFrame');
+                // Cross-origin policy ki wajah se agar iframe ki DOM access na ho paye toh yeh error catch kar lega
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Iframe ke andar ke common ad elements ko remove karna
+                const unwantedAds = iframeDoc.querySelectorAll('iframe[src*="ad"], .adsbygoogle, div[id^="ad-"], div[class*="popup"], div[class*="overlay"]');
+                unwantedAds.forEach(ad => ad.remove());
+            } catch (e) {
+                // Cross-Origin restriction ke karan yeh normal hai agar third-party domain ki DOM direct access na ho
+            }
+        }, 1000);
+    </script>
+
 </body>
 </html>
