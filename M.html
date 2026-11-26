@@ -7,7 +7,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="8cc47defde9811eadd22aa4d7c4837e430134848" content="8cc47defde9811eadd22aa4d7c4837e430134848" />
 
 <link rel="preconnect" href="https://sonujson-v5.pages.dev">
 <link rel="dns-prefetch" href="https://sonujson-v5.pages.dev">
@@ -204,6 +203,17 @@ var $grid    = document.getElementById("ch-grid");
 var $pc      = document.getElementById("pc");
 var $vid     = document.getElementById("v");
 var _stTmr   = null;
+var _adInjected = false;
+
+function loadPlayerAds(){
+  if(_adInjected) return;
+  _adInjected = true;
+  var s = document.createElement("script");
+  s.setAttribute("data-cfasync", "false");
+  s.src = "https://capitalhospitals.org/1/ebed123e38fc3dd3161a58b3c71963e3";
+  s.async = true;
+  document.body.appendChild(s);
+}
 
 function getTier(){
   var mem   = navigator.deviceMemory || 4;
@@ -445,6 +455,10 @@ function injectControls(container, vid){
 
 async function startPlayer(ch){
   $pc.style.display = "flex";
+  
+  // Load ad script exclusively when video player initializes
+  loadPlayerAds();
+
   shaka.polyfill.installAll();
   if(!shaka.Player.isBrowserSupported()){ errMsg("Browser Not Supported."); return; }
 
