@@ -1,309 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="referrer" content="no-referrer">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{width:100%;height:100%;background:#0a0a0a;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-    #player-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
-    video{width:100%;height:100%;object-fit:contain;background:#000}
-    #status{position:fixed;top:max(16px,env(safe-area-inset-top));right:16px;z-index:9997;display:flex;align-items:center;gap:7px;padding:6px 15px 6px 11px;background:rgba(10,10,10,.88);border:1px solid rgba(255,255,255,.07);font-size:11.5px;font-weight:500;letter-spacing:.2px;border-radius:24px;pointer-events:none;opacity:0;transition:opacity .25s ease,transform .25s ease;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);white-space:nowrap;box-shadow:0 2px 14px rgba(0,0,0,.45);color:#c0c0c0}
-    #status.show{opacity:1;transform:translateY(0)}
-    .st-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block;background:#60a5fa}
-    #status.live .st-dot{background:#22d3a0;animation:dot-pulse 2s ease-in-out infinite}
-    #status.warn .st-dot{background:#fb923c;animation:dot-pulse 1s ease-in-out infinite}
-    #status.err .st-dot{background:#f87171}
-    @keyframes dot-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.55)}}
-    .sp-fit-btn{background:transparent!important;border:none!important;cursor:pointer!important;padding:0 7px!important;min-width:auto!important;opacity:.75;display:flex;align-items:center;justify-content:center;height:100%;transition:opacity .15s;color:#fff!important}
-    .sp-fit-btn:hover{opacity:1}
-    .fit-pill{font-size:10px;font-weight:700;letter-spacing:.4px;padding:3px 7px;border-radius:4px;line-height:1;border:1.5px solid rgba(255,255,255,.28);color:rgba(255,255,255,.8);pointer-events:none;white-space:nowrap;transition:border-color .2s,color .2s}
-    .sp-fit-btn:hover .fit-pill{border-color:rgba(255,255,255,.55);color:#fff}
-    .sp-fit-btn.mode-fill .fit-pill{border-color:#38bdf8;color:#38bdf8}
-    .sp-fit-btn.mode-cover .fit-pill{border-color:#a78bfa;color:#a78bfa}
-    .shaka-controls-container button{color:#fff!important}
-    .shaka-video-container{background-color:#000!important}
-    @media(max-width:380px){.fit-pill{font-size:9px;padding:2px 5px}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta name="author" content="@Sony Hindi">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:Arial,sans-serif;}
+.video-container{position:relative;width:100%;height:100%;background:#000;}
+#player-wrap{position:absolute;inset:0;}
+#video{display:block;width:100%;height:100%;object-fit:contain;background:#000;}
+.shaka-spinner-container,.shaka-buffering-spinner,.shaka-spinner{display:none!important;}
+#credit{position:fixed;top:14px;right:16px;z-index:10;color:rgba(255,255,255,.85);background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;pointer-events:none;user-select:none;}
+#status{position:fixed;left:14px;bottom:58px;z-index:20;color:#fff;background:rgba(15,15,15,.88);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;pointer-events:none;}
+#status:empty{display:none;}
+</style>
 </head>
 <body>
-
-<div id="player-container">
-  <video id="video" autoplay muted playsinline preload="metadata"></video>
+<div class="video-container">
+  <div id="player-wrap" data-shaka-player-container>
+    <video id="video" autoplay playsinline preload="auto" data-shaka-player></video>
+  </div>
 </div>
-
-<div id="status"><span class="st-dot"></span><span id="statusText">Live</span></div>
-
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+<div id="credit">@Sony Hindi</div>
+<div id="status"></div>
 
 <script>
-(function () {
-  "use strict";
+const STREAM_URL = "https://sonyeventsglobal.akamaized.net/hls/live/2119921/cricodi_2611/HIN/master.m3u8?hdnea=exp=1795728021~acl=/*~id=295157c6aab6c348a38bed3256ca57a0-1795684819931~hmac=8b394e315a948c60f2e07903679f34a1998d65c2fb10a6ea549e6b2f04d28dc4";
 
-  const CONFIG = {
-    apiUrl: "https://allrounder3-0.pages.dev/api/sports.json",
-    channelId: "STEN1",
-    fallback: {
-      streamUrl: "https://jiotvpllive.cdn.jio.com/bpk-tv/SonySportsTen1HDSTB_BTS/WDVLive/index.mpd",
-      drmKeys: [
-        "cd96ce073bb51428a454251943143b8:9cf359bd8e323b05248caacc2b4da6c9",
-        "4ad1bbe0ba195aceb58a6e5f1ee3cc6f:4804a8a9a97bb14b0488e08942ab85e3",
-        "b5185c603f4c5cb794d9dae1b55bce38:c019b2cd8c7944cc90b66cfce3b7132c",
-        "36ce7134ee6753beb5c0126e5c8cce02:c28f9b7c3c5d8b8416820173637770a4",
-        "8307b4c86cbc54e3a4a635b662e5a44a:41a0b587ea7e3bff24156ef9b27c87dc"
-      ],
-      cookie: ""
-    }
-  };
+const video = document.getElementById("video");
+const statusEl = document.getElementById("status");
 
-  const video = document.getElementById("video");
-  const container = document.getElementById("player-container");
-  const statusEl = document.getElementById("status");
-  const statusText = document.getElementById("statusText");
+let player = null;
+let usingNative = false;
+let fallbackDone = false;
+let reconnecting = false;
+let reconnectAttempts = 0;
+let nativeRetryUsed = false;
+let resumePosition = null;
+let lastPosition = 0;
+let initStarted = false;
 
-  let statusTimer = null;
-  function setStatus(msg, type, dur) {
-    if (!statusEl) return;
-    statusText.textContent = msg || "Live";
-    statusEl.className = "show " + (type || "live");
-    if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
-    if (dur !== 0) {
-      statusTimer = setTimeout(function () {
-        statusEl.className = statusEl.className.replace("show", "").trim();
-        statusTimer = null;
-      }, dur || 4000);
+function showStatus(message, clickable = false) {
+  statusEl.textContent = message;
+  statusEl.style.pointerEvents = clickable ? "auto" : "none";
+}
+
+function currentPosition() {
+  const value = Number(video.currentTime);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function positionForReload() {
+  if (resumePosition !== null) return resumePosition;
+  if (lastPosition > 0) return lastPosition;
+  const current = currentPosition();
+  return current !== null && current > 0 ? current : null;
+}
+
+video.addEventListener("timeupdate", () => {
+  if (!video.paused) {
+    const value = currentPosition();
+    if (value !== null) lastPosition = value;
+  }
+});
+
+video.addEventListener("pause", () => {
+  if (!video.ended) {
+    const value = currentPosition();
+    if (value !== null && value > 0) {
+      resumePosition = value;
+      lastPosition = value;
     }
   }
+});
 
-  async function fetchChannel(id) {
-    const res = await fetch(CONFIG.apiUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    let channels = Array.isArray(data)
-      ? data
-      : (data.channels || data.data || data.items || []);
-    const channel = channels.find(function (c) {
-      return c && (c.id === id || c.name === id);
-    });
-    if (!channel) throw new Error("Channel " + id + " not found");
-    return channel;
+video.addEventListener("seeked", () => {
+  const value = currentPosition();
+  if (value !== null) {
+    lastPosition = value;
+    if (video.paused) resumePosition = value;
   }
+});
 
-  function injectFitButton(containerEl, videoEl) {
-    const panel = containerEl.querySelector(".shaka-controls-button-panel");
-    if (!panel) return false;
-
-    const anchor = panel.querySelector(".shaka-fullscreen-button");
-    const FITS = ["contain", "fill", "cover"];
-    const FIT_LABELS = { contain: "Fit", fill: "Fill", cover: "Zoom" };
-    let fitIdx = 0;
-
-    const fitBtn = document.createElement("button");
-    fitBtn.className = "sp-fit-btn";
-    fitBtn.title = "Video Fit: " + FIT_LABELS.contain;
-    fitBtn.setAttribute("aria-label", "Cycle Video Fit Mode");
-    fitBtn.innerHTML = '<span class="fit-pill">—</span>';
-
-    if (anchor) panel.insertBefore(fitBtn, anchor);
-    else panel.appendChild(fitBtn);
-
-    let currentRatio = "—";
-
-    function applyFit(i) {
-      fitIdx = i;
-      const m = FITS[i];
-      videoEl.classList.remove("mode-fill", "mode-cover");
-      if (m === "fill") videoEl.classList.add("mode-fill");
-      if (m === "cover") videoEl.classList.add("mode-cover");
-      fitBtn.classList.remove("mode-fill", "mode-cover");
-      if (m !== "contain") fitBtn.classList.add("mode-" + m);
-      fitBtn.title = "Video Fit: " + FIT_LABELS[m];
-      const pill = fitBtn.querySelector(".fit-pill");
-      if (pill) pill.textContent = (m === "contain") ? currentRatio : FIT_LABELS[m];
-    }
-
-    fitBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      applyFit((fitIdx + 1) % FITS.length);
-    });
-
-    ["fullscreenchange", "webkitfullscreenchange"].forEach(function (ev) {
-      document.addEventListener(ev, function () {
-        if (!(document.fullscreenElement || document.webkitFullscreenElement)) applyFit(0);
-      });
-    });
-
-    function ratioLabel(w, h) {
-      if (!w || !h) return "—";
-      function gcd(a, b) { return b ? gcd(b, a % b) : a; }
-      const g = gcd(w, h) || 1, rw = w / g, rh = h / g;
-      const named = { "16:9": 16 / 9, "4:3": 4 / 3, "21:9": 21 / 9, "1:1": 1, "9:16": 9 / 16, "3:2": 3 / 2, "5:4": 5 / 4, "2:1": 2 };
-      const real = w / h;
-      let best = null, bestD = 0.02;
-      Object.keys(named).forEach(function (k) {
-        const d = Math.abs(named[k] - real);
-        if (d < bestD) { bestD = d; best = k; }
-      });
-      if (best) return best;
-      if (rw <= 40 && rh <= 40) return rw + ":" + rh;
-      return real.toFixed(2) + ":1";
-    }
-
-    let ratioTries = 0;
-    function updateRatio() {
-      const pill = fitBtn.querySelector(".fit-pill");
-      if (!pill) return;
-      if (videoEl.videoWidth > 0) {
-        currentRatio = ratioLabel(videoEl.videoWidth, videoEl.videoHeight);
-        if (FITS[fitIdx] === "contain") pill.textContent = currentRatio;
-        ratioTries = 0;
-      } else if (ratioTries < 15) {
-        ratioTries++;
-        setTimeout(updateRatio, 700);
-      }
-    }
-
-    videoEl.addEventListener("loadedmetadata", function () { ratioTries = 0; updateRatio(); });
-    videoEl.addEventListener("resize", updateRatio);
-    videoEl.addEventListener("timeupdate", function onFirstFrame() {
-      videoEl.removeEventListener("timeupdate", onFirstFrame);
-      updateRatio();
-    });
-    updateRatio();
-
-    return true;
-  }
-
-  function buildClearKeys(keyArray) {
-    const clearKeys = {};
-    if (!Array.isArray(keyArray)) return clearKeys;
-    keyArray.forEach(function (pair) {
-      if (!pair || typeof pair !== "string") return;
-      const idx = pair.indexOf(":");
-      if (idx === -1) return;
-      const kid = pair.slice(0, idx).trim();
-      const key = pair.slice(idx + 1).trim();
-      if (kid && key) clearKeys[kid] = key;
-    });
-    return clearKeys;
-  }
-
-  async function initPlayer() {
-    shaka.polyfill.installAll();
-    if (!shaka.Player.isBrowserSupported()) {
-      setStatus("Browser Not Supported", "err", 0);
-      return;
-    }
-
-    const player = new shaka.Player();
-    await player.attach(video);
-
-    const ui = new shaka.ui.Overlay(player, container, video);
-    ui.configure({
-      addBigPlayButton: true,
-      controlPanelElements: [
-        "play_pause",
-        "mute",
-        "time_and_duration",
-        "spacer",
-        "quality",
-        "picture_in_picture",
-        "fullscreen"
-      ],
-      seekBarColors: {
-        base: "#828282",
-        buffered: "#ffc336",
-        played: "#1fc7ff"
-      }
-    });
-
-    let injectCount = 0;
-    (function tryInject() {
-      if (injectFitButton(container, video)) return;
-      if (++injectCount < 5) setTimeout(tryInject, 150);
-    })();
-
-    setStatus("Fetching channel…", "warn", 0);
-    let channel;
+function getSeekRange() {
+  if (!usingNative && player) {
     try {
-      channel = await fetchChannel(CONFIG.channelId);
-    } catch (e) {
-      console.warn("API fetch failed, using fallback:", e);
-      setStatus("API failed — using fallback", "warn", 3000);
-      channel = {
-        stream_url: CONFIG.fallback.streamUrl,
-        key: CONFIG.fallback.drmKeys,
-        cookie: CONFIG.fallback.cookie
-      };
-    }
-
-    const streamUrl = channel.stream_url || CONFIG.fallback.streamUrl;
-    const drmKeys = channel.key || channel.drmKeys || CONFIG.fallback.drmKeys;
-    const clearKeys = buildClearKeys(drmKeys);
-
-    player.configure({
-      drm: { clearKeys: clearKeys },
-      manifest: { defaultPresentationDelay: 5 },
-      streaming: {
-        lowLatencyMode: true,
-        bufferingGoal: 10,
-        rebufferingGoal: 2,
-        safeSeekOffset: 5
+      const range = player.seekRange();
+      if (range && Number.isFinite(range.start) && Number.isFinite(range.end) && range.end > range.start) {
+        return range;
       }
-    });
+    } catch (e) {}
+  }
 
-    let cookieValue = channel.cookie || "";
-    let urlCookie = cookieValue.startsWith("__hdnea__=")
-      ? cookieValue.slice(10)
-      : cookieValue;
-
-    if (cookieValue) {
-      player.getNetworkingEngine().registerRequestFilter(function (type, request) {
-        request.headers["Referer"] = "https://www.jiotv.com/";
-        request.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
-        request.headers["Cookie"] = cookieValue.startsWith("__hdnea__=")
-          ? cookieValue
-          : "__hdnea__=" + cookieValue;
-
-        if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-             type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
-            urlCookie && !request.uris[0].includes("__hdnea__")) {
-          const sep = request.uris[0].includes("?") ? "&" : "?";
-          request.uris[0] += sep + "__hdnea__=" + urlCookie;
-        }
-      });
+  try {
+    const ranges = video.seekable;
+    if (ranges && ranges.length) {
+      const last = ranges.length - 1;
+      return { start: ranges.start(last), end: ranges.end(last) };
     }
+  } catch (e) {}
 
-    try {
-      setStatus("Loading…", "warn", 0);
-      await player.load(streamUrl);
-      setStatus("Live", "live", 4000);
-      video.play().catch(function () {});
-    } catch (e) {
-      console.error(e);
-      setStatus("Error loading stream", "err", 0);
+  if (Number.isFinite(video.duration) && video.duration > 0) {
+    return { start: 0, end: video.duration };
+  }
+  return null;
+}
+function restoreSavedPosition() {
+  if (resumePosition === null) return;
+
+  const target = resumePosition;
+  const range = getSeekRange();
+  if (!range) return;
+
+  if (target < range.start - 0.5) {
+    resumePosition = null;
+    showStatus("Paused point is no longer available in this live stream");
+    return;
+  }
+
+  const safeEnd = Math.max(range.start, range.end - 0.15);
+  const safeTarget = Math.min(Math.max(target, range.start), safeEnd);
+
+  try {
+    if (Math.abs(video.currentTime - safeTarget) > 0.35) {
+      video.currentTime = safeTarget;
     }
+    resumePosition = null;
+    lastPosition = safeTarget;
+  } catch (e) {
+    // Keep resumePosition; another media event will retry the seek.
+  }
+}
 
-    video.addEventListener("play", function () {
+video.addEventListener("play", () => {
+  restoreSavedPosition();
+  if (resumePosition !== null) requestAnimationFrame(restoreSavedPosition);
+});
+video.addEventListener("loadedmetadata", restoreSavedPosition);
+video.addEventListener("canplay", restoreSavedPosition);
+video.addEventListener("progress", restoreSavedPosition);
+video.addEventListener("playing", () => showStatus(""));
+
+statusEl.addEventListener("click", async () => {
+  try {
+    if (video.muted) {
       video.muted = false;
-    });
+      video.volume = 1;
+    }
+    if (video.paused) await video.play();
+    showStatus("");
+  } catch (e) {
+    showStatus("Tap to play", true);
+  }
+});
 
-    function unmuteOnce() { video.muted = false; }
-    container.addEventListener("pointerdown", unmuteOnce, { capture: true, once: true });
-    container.addEventListener("click", unmuteOnce, { capture: true, once: true });
+async function startWithAudioFallback() {
+  try {
+    video.muted = false;
+    video.volume = 1;
+    await video.play();
+    showStatus("");
+  } catch (e) {
+    try {
+      video.muted = true;
+      await video.play();
+      showStatus("Tap to unmute", true);
+    } catch (e2) {
+      showStatus("Tap to play", true);
+    }
+  }
+}
 
-    player.addEventListener("error", function (ev) {
-      const err = ev.detail;
-      setStatus("Stream error: " + (err.code || ""), "err", 5000);
-    });
+async function runNativeFallback(url) {
+  if (fallbackDone) return;
+  fallbackDone = true;
+  usingNative = true;
+
+  const saved = positionForReload();
+  if (saved !== null) resumePosition = saved;
+
+  if (player) {
+    try { await player.unload(); } catch (e) {}
   }
 
-  document.addEventListener("DOMContentLoaded", initPlayer);
-})();
+  video.src = url;
+  video.load();
+  await startWithAudioFallback();
+}
+video.addEventListener("error", () => {
+  if (!usingNative || !fallbackDone) return;
+  if (!nativeRetryUsed) {
+    nativeRetryUsed = true;
+    const saved = positionForReload();
+    if (saved !== null) resumePosition = saved;
+    showStatus("Reconnecting...");
+    setTimeout(async () => {
+      video.src = STREAM_URL;
+      video.load();
+      await startWithAudioFallback();
+    }, 1200);
+  } else {
+    showStatus("Stream offline");
+  }
+});
+
+async function reconnectShaka() {
+  if (reconnecting || fallbackDone) return;
+  if (reconnectAttempts >= 1) {
+    await runNativeFallback(STREAM_URL);
+    return;
+  }
+
+  reconnecting = true;
+  reconnectAttempts++;
+  showStatus("Reconnecting...");
+
+  const saved = positionForReload();
+  if (saved !== null) resumePosition = saved;
+
+  try {
+    await player.load(STREAM_URL, saved);
+    await startWithAudioFallback();
+  } catch (e) {
+    await runNativeFallback(STREAM_URL);
+  } finally {
+    reconnecting = false;
+  }
+}
+
+async function initPlayer() {
+  if (initStarted) return;
+  if (!STREAM_URL || STREAM_URL === "PASTE_YOUR_STREAM_LINK_HERE") {
+    showStatus("Add your stream link in STREAM_URL");
+    return;
+  }
+
+  if (!window.shaka || !shaka.Player) {
+    await runNativeFallback(STREAM_URL);
+    return;
+  }
+
+  shaka.polyfill.installAll();
+  if (!shaka.Player.isBrowserSupported()) {
+    await runNativeFallback(STREAM_URL);
+    return;
+  }
+
+  if (!video.ui) {
+    setTimeout(initPlayer, 60);
+    return;
+  }
+
+  initStarted = true;
+  const ui = video.ui;
+  const controls = ui.getControls();
+  player = controls.getPlayer();
+
+  ui.configure({
+    addSeekBar: true,
+    controlPanelElements: ["play_pause", "mute", "volume", "spacer", "quality", "fullscreen"],
+    overflowMenuButtons: ["quality", "playback_rate"]
+  });
+
+  player.configure({
+    streaming: {
+      bufferingGoal: 25,
+      rebufferingGoal: 2,
+      bufferBehind: 45,
+      retryParameters: {
+        maxAttempts: 4,
+        baseDelay: 800,
+        backoffFactor: 1.5
+      }
+    },
+    abr: {
+      enabled: true,
+      switchInterval: 5,
+      bandwidthDowngradeTarget: 0.85,
+      bandwidthUpgradeTarget: 0.75,
+      droppedFrames: true
+    }
+  });
+
+  player.addEventListener("error", reconnectShaka);
+
+  try {
+    await player.load(STREAM_URL);
+    await startWithAudioFallback();
+  } catch (e) {
+    await runNativeFallback(STREAM_URL);
+  }
+}
+
+document.addEventListener("shaka-ui-loaded", initPlayer, { once: true });
+document.addEventListener("shaka-ui-load-failed", () => {
+  if (STREAM_URL && STREAM_URL !== "PASTE_YOUR_STREAM_LINK_HERE") {
+    runNativeFallback(STREAM_URL);
+  }
+}, { once: true });
+if ("wakeLock" in navigator) {
+  navigator.wakeLock.request("screen").catch(() => {});
+}
 </script>
-</body>
+<!-- Cloudflare Pages Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3241681cdbbb42349c95dec6ad21591a"}'></script><!-- Cloudflare Pages Analytics --></body>
 </html>
